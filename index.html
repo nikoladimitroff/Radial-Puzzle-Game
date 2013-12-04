@@ -18,13 +18,53 @@
 			width: 100%;
 			height: 100%;
 		}
+		
+		nav {
+			position: absolute;
+			top: 1%;
+			left: 1%;			
+		}
+		nav div {
+			border: 2px double black;
+		}
 	</style>
 </head>
 <body>
 	<div class="canvas-container">
-		<canvas width="1000px" height="800px" id="puzzle-canvas"></canvas>
+		<canvas id="puzzle-canvas"></canvas>
+		
+		
+		<nav>
+			<label for="showUI">Show UI?</label>
+			<input id="showUI" type="checkbox" data-bind="checked: shouldShowUI" />
+			
+			<div id="menu" data-bind="visible: shouldShowUI">
+				<label for="circles-count">Circle count:</label>
+				<input id="circles-count" type="number" min="1" max="20" data-bind="value: circlesCount"/>
+				<br>
+				<label for="angular-speed">Angular speed (formula is speed = PI / &lt; your_number &gt;):</label>
+				<input id="angular-speed" type="number" min="1" data-bind="value: angularSpeed"/>
+				<br>
+				<label for="error-margin">Error margin multiplier (formula is errorMargin = speed * &lt; your_number &gt;):</label>
+				<input id="error-margin" type="number" min="0" data-bind="value: errorMargin"/>
+				<br>
+				<label for="image">Image:</label>
+				<input id="image" type="text" data-bind="value: imagePath"/>
+				<br>
+				<button id="save-button">Save</button>
+				<br>
+				<button id="load-button">Load</button>
+				<br>
+				<label for="saves">Current Saves:</label>
+				<ul id="saves" data-bind="foreach: saves">
+					<li data-bind="text: $data"></li>
+				<ul>
+			</div>
+			
+		</nav>
 	</div>
 </body>
 <script src="jquery-2.0.0.js"></script>
+<script src="knockout-3.0.0.js"></script>
 <script src="puzzle.js"></script>
 </html>
