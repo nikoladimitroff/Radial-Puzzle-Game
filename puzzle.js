@@ -43,7 +43,6 @@ var spacial = {
 	},
 };
 
-
 var visuals = {
 	overlayColor: "rgba(255, 255, 0, 0.2)",
 	imagePath: "monalisa.jpg",
@@ -59,7 +58,7 @@ var visuals = {
 }
 
 var solve = function solve(angle) {
-	angle = normalizeAngle(angle || 0);
+	angle = utilities.normalizeAngle(angle || 0);
 	var length = gameData.circles.length;
 	for (var i = 0; i < length; i++) {
 		gameData.circles[i].rotation = angle;
@@ -130,7 +129,6 @@ var keybindings = {
 };
 
 var utilities = (function () {
-
 	var copyArray = function (source) {
 		var copy = [];
 		for (var i = 0; i < source.length; i++) {
@@ -138,9 +136,14 @@ var utilities = (function () {
 		}
 		return copy;
 	};
-	
+	var normalizeAngle = function normalizeAngle(angle) { 
+		angle = angle % (2 * Math.PI); 
+		return angle;
+	};
+
 	return {
-		copyArray: copyArray
+		copyArray: copyArray,
+		normalizeAngle: normalizeAngle,
 	};
 })();
 
@@ -173,11 +176,6 @@ var saveManager = (function () {
 })();
 
 
-var normalizeAngle = function normalizeAngle(angle) { 
-	angle = angle % (2 * Math.PI); 
-	return angle;
-};
-
 var testVictoryCondition = function testVictoryCondition() {
 	var errorMargin = gameData.errorMargin * gameData.angularSpeed;
 	var circles = gameData.circles;
@@ -207,11 +205,11 @@ var update = function update() {
 	}
 	
 	var current = gameData.current;
-	current.rotation = normalizeAngle(current.rotation + speed);
+	current.rotation = utilities.normalizeAngle(current.rotation + speed);
 	for (var i = 0; i < current.interlocked.length; i++) {
 		var index = current.interlocked[i];
 		var next = gameData.circles[index];
-		next.rotation = normalizeAngle(next.rotation + speed);		
+		next.rotation = utilities.normalizeAngle(next.rotation + speed);		
 	}
 	
 	var hasWon = testVictoryCondition();
@@ -258,81 +256,18 @@ var drawScene = function () {
 }
 
 var draw = function () {
-
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	drawScene();
 	
 	requestAnimationFrame(draw);
 }
 // Run the game
-init();
-update();
-draw();
-
-// knockout
-var initialValues = {
-	angularSpeed: Math.PI / 72,
-	circlesCount: 5,
-};
-var saves = (function () {
-	var length = localStorage.length;
-	var saves = [];
-	for (var i = 0; i < length; i++) {
-		saves.push(localStorage.key(i));
-	}
-	return saves;
-})();
-
-var viewmodel = {
-	circlesCount: ko.computed({
-		read: function () {
-			return gameData.circles.length;
-		},
-		write: function (value) {
-			gameData.recreateCircles(value);
-		}
-	}),
-	angularSpeed: ko.computed({
-		read: function() {
-			return Math.PI / gameData.angularSpeed;
-		},
-		write: function (value) {
-			gameData.angularSpeed = Math.PI / value;
-		}
-	}),
-	errorMargin: ko.computed({
-		read: function () {
-			return gameData.errorMargin;
-		},
-		write: function (value) {
-			gameData.errorMargin = value;
-		}
-	}),
-	imagePath: ko.computed({
-		read: function () {
-			return visuals.imagePath;
-		},
-		write: function (value) {
-			visuals.loadImage(value);
-		}
-	}),
-	saves: ko.observableArray(saves),
-	
-	shouldShowUI: ko.observable(true),
+var main = function main() {
+	init();
+	update();
+	draw();
 };
 
-$(document).ready(function () {
-	ko.applyBindings(viewmodel);
-	$("#save-button").click(function () {
-		var name = prompt("Name the save file");
-		saveManager.save(name);
-	});
-	$("#load-button").click(function () {
-		var name = prompt("Name the save file");
-		saveManager.load(name);
-	});
-});
-
-
+main();
 
 
