@@ -4,12 +4,22 @@ window.requestAnimationFrame =
 	window.webkitRequestAnimationFrame || 
 	window.msRequestAnimationFrame || 
 	function (callback) { setTimeout(callback, 1000 / 30); }
+	
+var Circle = function (rotation, interlocked) {
+	if (rotation.constructor != Number)
+		throw new TypeError("rotation must be a number");
+	if (interlocked.constructor != Array)
+		throw new TypeError("interlocked must be an array");
+	
+	this.rotation = rotation;
+	this.interlocked = interlocked;
+}
 
 var canvas = document.getElementById("puzzle-canvas");
 var context = canvas.getContext("2d");
 
 var updateTimer = 1000 / 30;
-var imageFileLocation = "connor.jpg";
+var imageFileLocation = "monalisa.jpg";
 
 var circlesCount = 5;
 
@@ -84,14 +94,20 @@ window.addEventListener("keyup", function (args) {
 var gameData = {
 	angularSpeed: Math.PI / 72,
 	selectedIndex: 0,
-	rotations: [],
-	interlocked: [],
+	circles: [],
 };
-for (var i = 1; i < circlesCount; i++) {		
-	gameData.rotations[i] = Math.random() * 2 * Math.PI - Math.PI;
+Object.defineProperty(gameData, "current", {
+	get: function () {
+		return gameData.circles[gameData.selectedIndex];
+	},
+});
+
+for (var i = 0; i < circlesCount; i++) {	
+	var angle =  Math.random() * 2 * Math.PI - Math.PI;
+	gameData.circles.push(new Circle(angle, []));
 }
-gameData.interlocked[0] = [1];
-gameData.interlocked[2] = [3];
+gameData.circles[0].interlocked = [1];
+gameData.circles[2].interlocked = [3];
 
 var keybindings = {
 	nextCircle: 0x44,
@@ -100,13 +116,21 @@ var keybindings = {
 	rotateNegative: 0x57
 };
 
-var copyArray = function (source) {
-	var copy = [];
-	for (var i = 0; i < source.length; i++) {
-		copy[i] = source[i];
-	}
-	return copy;
-};
+var utilities = (function () {
+
+	var copyArray = function (source) {
+		var copy = [];
+		for (var i = 0; i < source.length; i++) {
+			copy[i] = source[i];
+		}
+		return copy;
+	};
+	
+	return {
+		copyArray: copyArray;
+	};
+})();
+
 
 var normalizeAngle = function normalizeAngle(angle) { 
 	angle = angle % (2 * Math.PI); 
@@ -115,9 +139,9 @@ var normalizeAngle = function normalizeAngle(angle) {
 
 var testVictoryCondition = function testVictoryCondition() {
 	var errorMargin = gameData.angularSpeed;
-	var rotations = gameData.rotations;
-	for (var i = 0; i < rotations.length - 1; i++) {
-		if (Math.abs(rotations[i] - rotations[i + 1]) > errorMargin) {
+	var circles = gameData.circles;
+	for (var i = 0; i < circles.length - 1; i++) {
+		if (Math.abs(circles[i].rotation - circles[i + 1].rotation) > errorMargin) {
 			return false;
 		}
 	}
@@ -140,18 +164,18 @@ var update = function update() {
 		speed = -gameData.angularSpeed;
 	}
 	
-	var rotations = gameData.rotations; // Shortcut
-	var current = gameData.selectedIndex;
-	rotations[current] = normalizeAngle(rotations[current] + speed);
-	for (var i = 0; i < gameData.interlocked[current]; i++) {
-		var index = gameData.interlocked[current][i];
-		rotations[index] = normalizeAngle(rotations[index] + speed);		
+	var current = gameData.current;
+	current.rotation = normalizeAngle(current.rotation + speed);
+	for (var i = 0; i < current.interlocked.length; i++) {
+		var index = current.interlocked[i];
+		var next = gameData.circles[index];
+		next.rotation = normalizeAngle(next.rotation + speed);		
 	}
 	
 	var hasWon = testVictoryCondition();
 	if (hasWon) console.log("GJ");
 	
-	previousKeyboard = copyArray(keyboard);
+	previousKeyboard = utilities.copyArray(keyboard);
 	setTimeout(update, updateTimer);
 }
 
@@ -168,16 +192,20 @@ var drawTorus = function (smallRadius, bigRadius, shouldOverlay) {
 			context.fill();
 		}
 		
-		context.drawImage(visuals.image, 0, 0);
+		var imageWidth = visuals.image.width,
+			imageHeight = visuals.image.height;
+		context.drawImage(visuals.image, 
+			(canvas.width - imageWidth) / 2, (canvas.height - imageHeight) / 2, imageWidth, imageHeight);
 		
 	context.restore();
 }
 
 var drawScene = function () {
-	for (var i = 0; i < circlesCount; i++) {		
+	for (var i = 0; i < circlesCount; i++) {
+		var circle = gameData.circles[i];
 		context.save();
 			context.translate(spacial.center.x, spacial.center.y);
-			context.rotate(gameData.rotations[i]);
+			context.rotate(circle.rotation);
 			context.translate(-spacial.center.x, -spacial.center.y);
 			drawTorus(
 				spacial.minRadius + i * spacial.step, 
