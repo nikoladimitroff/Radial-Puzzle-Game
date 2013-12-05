@@ -73,7 +73,6 @@ var fixDimensions = function fixDimensions() {
 	spacial.recalculate();
 	
 	context.globalCompositeOperation = "destination-over";
-	context.fillStyle = visuals.overlayColor;
 };
 $(window).resize(fixDimensions);
 
@@ -172,6 +171,20 @@ var saveManager = (function () {
 			gameData.interlocked = data.interlocked;
 			gameData.recreateCircles(data.circlesCount);
 		},
+		dumpSaves: function () {
+			var saves = [];
+			var length = localStorage.length;
+			for (var i = 0; i < length; i++) {
+				var name = localStorage.key(i);
+				var data = localStorage.getItem(name);
+				saves.push({ 
+					name: name,
+					data: data,
+				});
+			}
+			var json = JSON.stringify(saves);
+			return json;
+		},
 	};
 })();
 
@@ -228,6 +241,7 @@ var drawTorus = function (smallRadius, bigRadius, shouldOverlay) {
 		
 		if (shouldOverlay) {
 			context.beginPath();
+			context.fillStyle = visuals.overlayColor;
 			context.arc(spacial.center.x, spacial.center.y, bigRadius, 0, 2 * Math.PI);
 			context.fill();
 		}

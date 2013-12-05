@@ -46,6 +46,14 @@ var viewmodel = {
 			visuals.loadImage(value);
 		}
 	}),
+	overlayColor: ko.computed({
+		read: function () {
+			return visuals.overlayColor;
+		},
+		write: function (value) {
+			visuals.overlayColor = value;
+		},
+	}),
 	saves: ko.observableArray(saves),
 	
 	shouldShowUI: ko.observable(true),
@@ -60,6 +68,9 @@ $(document).ready(function () {
 	$("#load-button").click(function () {
 		var name = prompt("Name the save file");
 		saveManager.load(name);
+	});
+	$("#dump-button").click(function () {
+		console.log(saveManager.dumpSaves());
 	});
 });
 

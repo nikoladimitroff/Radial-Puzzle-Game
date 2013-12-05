@@ -51,9 +51,15 @@
 				<label for="image">Image:</label>
 				<input id="image" type="text" data-bind="value: imagePath"/>
 				<br>
+				<br>
+				<label for="color">Image:</label>
+				<input id="color" type="text" data-bind="value: overlayColor"/>
+				<br>
 				<button id="save-button">Save</button>
 				<br>
 				<button id="load-button">Load</button>
+				<br>
+				<button id="dump-button">Dump saves in console</button>
 				<br>
 				<label for="saves">Current Saves:</label>
 				<ul id="saves" data-bind="foreach: saves">
