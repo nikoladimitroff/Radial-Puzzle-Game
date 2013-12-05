@@ -27,6 +27,10 @@
 		nav div {
 			border: 2px double black;
 		}
+		
+		.bordered {
+			border: 1px solid black;
+		}
 	</style>
 </head>
 <body>
@@ -51,13 +55,21 @@
 				<label for="image">Image:</label>
 				<input id="image" type="text" data-bind="value: imagePath"/>
 				<br>
-				<br>
-				<label for="color">Image:</label>
+				<label for="color">Overlay color:</label>
 				<input id="color" type="text" data-bind="value: overlayColor"/>
+				<!--
+				<label for="stroke">Stroke only?</label>
+				<input id="stroke" type="checkbox" data-bind="checked: shouldOnlyStroke"/>
+				-->
 				<br>
 				<button id="save-button">Save</button>
-				<br>
 				<button id="load-button">Load</button>
+				<button id="delete-button">Delete</button>
+				<br>
+				<button id="import-button">Import From</button>
+				<span class="bordered">
+					<input type="file" id="import-file-selector"/>
+				</span>
 				<br>
 				<button id="dump-button">Dump saves in console</button>
 				<br>

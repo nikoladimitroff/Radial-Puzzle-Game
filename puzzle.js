@@ -45,6 +45,7 @@ var spacial = {
 
 var visuals = {
 	overlayColor: "rgba(255, 255, 0, 0.2)",
+	shouldStroke: false,
 	imagePath: "monalisa.jpg",
 	image: new Image(),
 	loadImage: function (path) {
@@ -170,6 +171,19 @@ var saveManager = (function () {
 			gameData.errorMargin = data.errorMargin;
 			gameData.interlocked = data.interlocked;
 			gameData.recreateCircles(data.circlesCount);
+			
+			return true;
+		},
+		delete: function (name) {
+			localStorage.removeItem(name);
+		},
+		clear: function () {
+			localStorage.clear();
+		},
+		import: function (saves) {
+			for (var i = 0; i < saves.length; i++) {
+				localStorage.setItem(saves[i].name, saves[i].data);
+			}
 		},
 		dumpSaves: function () {
 			var saves = [];
@@ -241,16 +255,24 @@ var drawTorus = function (smallRadius, bigRadius, shouldOverlay) {
 		
 		if (shouldOverlay) {
 			context.beginPath();
-			context.fillStyle = visuals.overlayColor;
-			context.arc(spacial.center.x, spacial.center.y, bigRadius, 0, 2 * Math.PI);
-			context.fill();
+			if (visuals.shouldStroke) {	
+				context.lineWidth = 15;
+				context.strokeStyle = visuals.overlayColor;
+				context.arc(spacial.center.x, spacial.center.y, smallRadius + 10, 0, 2 * Math.PI);
+				context.stroke();
+			}
+			else {
+				context.fillStyle = visuals.overlayColor;
+				context.arc(spacial.center.x, spacial.center.y, bigRadius, 0, 2 * Math.PI);
+				context.fill();
+			}
 		}
+		
 		
 		var imageWidth = visuals.image.width,
 			imageHeight = visuals.image.height;
 		context.drawImage(visuals.image, 
 			(canvas.width - imageWidth) / 2, (canvas.height - imageHeight) / 2, imageWidth, imageHeight);
-		
 	context.restore();
 }
 
