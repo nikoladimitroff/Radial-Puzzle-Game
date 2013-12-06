@@ -35,6 +35,11 @@ var viewmodel = {
 			gameData.errorMargin = value;
 		}
 	}),
+	// Interlocked
+	showInterlocks: ko.observable(true),
+	interlockedSchema: ko.observableArray(gameData.interlocked),
+	
+	// Visuals
 	imagePath: ko.computed({
 		read: function () {
 			_invalidatedTest();
@@ -80,12 +85,12 @@ function enumerateSaves() {
 $(document).ready(function () {
 	enumerateSaves();
 	$("#save-button").click(function () {
-		var name = prompt("Name the save file");
+		var name = prompt("Save file");
 		saveManager.save(name);
 		enumerateSaves();
 	});
 	$("#load-button").click(function () {
-		var name = prompt("Name the save file");
+		var name = prompt("Load file");
 		if (saveManager.load(name)) {
 			// Update UI
 			_invalidatedTest.notifySubscribers();
@@ -93,7 +98,7 @@ $(document).ready(function () {
 		
 	});
 	$("#delete-button").click(function () {
-		var name = prompt("Name the save file");
+		var name = prompt("Delete file");
 		if (name.toLowerCase() == "all") {
 			saveManager.clear();
 		}
@@ -105,9 +110,40 @@ $(document).ready(function () {
 	$("#dump-button").click(function () {
 		console.log(saveManager.dumpSaves());
 	});
-	// Check for the various File API support.
 	
-	if (window.File && window.FileReader && window.FileList && window.Blob) {
+	$("#edit-interlocks").click(function () {
+		// Convert to object, stringify and display, parse back, convert to array, update UI
+		var asObject = { };
+		for (var i = 0; i < gameData.interlocked.length; i++) {
+			var locks = gameData.interlocked[i];
+			if (locks && locks.length != 0) {
+				asObject[i] = locks;
+			}
+		}
+		var text = JSON.stringify(asObject);
+		var modified = prompt("Edit interlocks", text);
+		try {
+			asObject = JSON.parse(modified);
+		}
+		catch (Error) {
+			alert("Syntax error, reverting changes");
+			return;
+		}
+		gameData.interlocked = [];
+		viewmodel.interlockedSchema.removeAll();
+		for (var i in asObject) {
+			gameData.interlocked[i] = asObject[i];
+		}
+		for (var i = 0; i < gameData.interlocked.length; i++) {
+			viewmodel.interlockedSchema.push(gameData.interlocked[i]);
+		}
+		
+		gameData.recreateCircles(viewmodel.circlesCount());
+		_invalidatedTest.notifySubscribers();
+	});
+	
+	// Check for the various File API support.
+	if (window.File && window.FileReader && window.FileList) {
 	  
 		$("#import-file-selector").change(function (event) {
 			var file = event.target.files[0];

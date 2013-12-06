@@ -35,6 +35,9 @@ var spacial = {
 		// This constants works best
 		spacial.maxRadius = 0.585 * squareSide;
 		spacial.minRadius = spacial.maxRadius / (circlesCount - 1);
+		if (circlesCount == 1)
+			spacial.minRadius = spacial.maxRadius;
+			
 		spacial.center = { 
 			x: canvas.width / 2,
 			y: canvas.height / 2
@@ -44,8 +47,9 @@ var spacial = {
 };
 
 var visuals = {
-	overlayColor: "rgba(255, 255, 0, 0.2)",
-	shouldStroke: false,
+	overlayColor: "rgba(0, 0, 0, 1)",
+	shouldStroke: true,
+	lineWidth: 15,
 	imagePath: "monalisa.jpg",
 	image: new Image(),
 	loadImage: function (path) {
@@ -67,7 +71,8 @@ var solve = function solve(angle) {
 };
 
 // go responsive
-var fixDimensions = function fixDimensions() {
+var fixDimensions = function fixDimensions() {	
+	// main
 	var canvasContainer = $("#puzzle-canvas");
 	canvas.width = canvasContainer.width();
 	canvas.height = canvasContainer.height();
@@ -78,20 +83,20 @@ var fixDimensions = function fixDimensions() {
 $(window).resize(fixDimensions);
 
 var init = function () {
+	// Hook event handler
+	window.addEventListener("keydown", function (args) {
+		keyboard[args.keyCode] = true;
+		handleKeyboard(args.keyCode);
+	}, false);
+
+	window.addEventListener("keyup", function (args) {
+		keyboard[args.keyCode] = false;
+	}, false);
+	
+	
 	fixDimensions();
 	visuals.loadImage(visuals.imagePath);
 };
-
-var keyboard = [],
-	previousKeyboard = [];
-
-window.addEventListener("keydown", function (args) {
-	keyboard[args.keyCode] = true;
-}, false);
-
-window.addEventListener("keyup", function (args) {
-	keyboard[args.keyCode] = false;
-}, false);
 
 var gameData = {
 	angularSpeed: Math.PI / 72,
@@ -100,6 +105,7 @@ var gameData = {
 	selectedIndex: 0,
 	circles: [],
 	recreateCircles: function recreateCircles(count) {
+		gameData.selectedIndex = 0;
 		gameData.circles = [];
 		for (var i = 0; i < count; i++) {	
 			var angle =  Math.random() * 2 * Math.PI - Math.PI;
@@ -116,7 +122,7 @@ Object.defineProperty(gameData, "current", {
 });
 var interlocked = [];
 interlocked[0] = [1];
-interlocked[2] = [3];
+interlocked[2] = [3, 4];
 gameData.interlocked = interlocked;
 var circlesCount = 5;
 gameData.recreateCircles(circlesCount);
@@ -214,7 +220,39 @@ var testVictoryCondition = function testVictoryCondition() {
 	return true;
 };
 
-var update = function update() {
+
+
+var keyboard = [],
+	previousKeyboard = [];
+	
+var handleKeyboard = function handleKeyboard(keyCode) {
+	var circlesCount = gameData.circles.length;
+	if (keyCode == keybindings.nextCircle) {
+		gameData.selectedIndex = (gameData.selectedIndex + 1) % circlesCount;
+	}
+	else if (keyCode == keybindings.prevCircle) {
+		gameData.selectedIndex = (circlesCount + gameData.selectedIndex - 1) % circlesCount
+	}	
+	
+	var speed = 0;
+	if (keyCode == keybindings.rotatePositive) {
+		speed = gameData.angularSpeed;
+	}
+	else if (keyCode == keybindings.rotateNegative) {
+		speed = -gameData.angularSpeed;
+	}
+	
+	var current = gameData.current;
+	current.rotation = utilities.normalizeAngle(current.rotation + speed);
+	for (var i = 0; i < current.interlocked.length; i++) {
+		var index = current.interlocked[i];
+		var next = gameData.circles[index];
+		next.rotation = utilities.normalizeAngle(next.rotation + speed);		
+	}
+}
+
+// Handles keyboard the usual way
+var handleKeyboardDeprecated = function handleKeyboardDeprecated() {
 	var circlesCount = gameData.circles.length;
 	if (keyboard[keybindings.nextCircle] && !previousKeyboard[keybindings.nextCircle]) {
 		gameData.selectedIndex = (gameData.selectedIndex + 1) % circlesCount;
@@ -238,6 +276,10 @@ var update = function update() {
 		var next = gameData.circles[index];
 		next.rotation = utilities.normalizeAngle(next.rotation + speed);		
 	}
+};
+
+var update = function update() {
+	
 	
 	var hasWon = testVictoryCondition();
 	if (hasWon) console.log("GJ");
@@ -246,33 +288,36 @@ var update = function update() {
 	setTimeout(update, updateTimer);
 }
 
-var drawTorus = function (smallRadius, bigRadius, shouldOverlay) {
+var drawTorus = function (radius, shouldOverlay) {
 	context.save();
+				
+		var clippingRadius = radius;
+		if (shouldOverlay && visuals.shouldStroke) {
+			clippingRadius += context.lineWidth;
+		}
 		
 		context.beginPath();
-		context.arc(spacial.center.x, spacial.center.y, smallRadius, 0, 2 * Math.PI);
+		context.arc(spacial.center.x, spacial.center.y, clippingRadius, 0, 2 * Math.PI);
 		context.clip();
 		
 		if (shouldOverlay) {
-			context.beginPath();
-			if (visuals.shouldStroke) {	
-				context.lineWidth = 15;
+			if (visuals.shouldStroke) {				
 				context.strokeStyle = visuals.overlayColor;
-				context.arc(spacial.center.x, spacial.center.y, smallRadius + 10, 0, 2 * Math.PI);
+				context.arc(spacial.center.x, spacial.center.y, radius + visuals.lineWidth / 2, 0, 2 * Math.PI);
 				context.stroke();
 			}
 			else {
 				context.fillStyle = visuals.overlayColor;
-				context.arc(spacial.center.x, spacial.center.y, bigRadius, 0, 2 * Math.PI);
+				context.arc(spacial.center.x, spacial.center.y, radius, 0, 2 * Math.PI);
 				context.fill();
 			}
 		}
-		
 		
 		var imageWidth = visuals.image.width,
 			imageHeight = visuals.image.height;
 		context.drawImage(visuals.image, 
 			(canvas.width - imageWidth) / 2, (canvas.height - imageHeight) / 2, imageWidth, imageHeight);
+		
 	context.restore();
 }
 
@@ -284,7 +329,6 @@ var drawScene = function () {
 			context.rotate(circle.rotation);
 			context.translate(-spacial.center.x, -spacial.center.y);
 			drawTorus(
-				spacial.minRadius + i * spacial.step, 
 				spacial.minRadius + (i + 1) * spacial.step, 
 				i == gameData.selectedIndex);
 		context.restore();
@@ -293,6 +337,7 @@ var drawScene = function () {
 
 var draw = function () {
 	context.clearRect(0, 0, canvas.width, canvas.height);
+	context.lineWidth = visuals.lineWidth;
 	drawScene();
 	
 	requestAnimationFrame(draw);
