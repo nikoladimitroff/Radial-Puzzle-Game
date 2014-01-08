@@ -35,26 +35,28 @@ var puzzle = new Puzzle($("#puzzle-container"), $("#puzzle-canvas")[0].getContex
 var gameData = puzzle.gameData;
 var secondPuzzle = new Puzzle($("#second-container"), $("#second-canvas")[0].getContext("2d"), 5);
 
+function update() {
+    puzzle.update();
+    if (puzzle.testVictoryCondition()) {
+        dispatcher.server.solved();
+        alert("YOU WON, THE OTHER GUY IS CUTTING HIS WRISTS NOW, ARE YOU FUCKING SORRY?");
+    }
+    else {
+        secondPuzzle.update();
+        setTimeout(update, 1000 / 30);
+    }
+}
+function draw() {
+    puzzle.draw();
+    secondPuzzle.draw();
+    requestAnimationFrame(draw);
+}
+
 // Run the game
 var main = function main() {
-	setTimeout(function update() {
-	    puzzle.update();
-	    if (puzzle.testVictoryCondition()) {
-	        dispatcher.server.solved();
-	        alert("YOU WON, THE OTHER GUY IS CUTTING HIS WRISTS NOW, ARE YOU FUCKING SORRY?");
-	    }
-	    else {
-	        secondPuzzle.update();
-	        setTimeout(update, 1000 / 30);
-	    }
-	}, 1000 / 30);
-	
-	requestAnimationFrame(function draw() {
-	    puzzle.draw();
-	    secondPuzzle.draw();
-		requestAnimationFrame(draw);
-	});
-	
+    update();
+    draw();
+
 	initInterface(puzzle);
 	
 	dispatcher.client.gameStarted = function () {
@@ -66,6 +68,7 @@ var main = function main() {
 	dispatcher.client.circleChanged = function (id, circle) {
 	    secondPuzzle.gameData.selectedIndex = circle;
 	}
+
 	dispatcher.client.solved = function (id) {
 	    secondPuzzle.solve();
 	    alert("nab, you just got ownd");

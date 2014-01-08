@@ -116,9 +116,13 @@ var Puzzle = (function () {
 	Puzzle.prototype.recreateCircles = function recreateCircles(count) {
 		this.gameData.selectedIndex = 0;
 		this.gameData.circles = [];
-		for (var i = 0; i < count; i++) {	
-			var angle =  Math.random() * 2 * Math.PI - Math.PI;
-			this.gameData.circles.push(new Circle(angle, this.gameData.interlocked[i] || []));
+        // Some totally random start values
+		var angle = Math.sin(17);
+		var step = (1.5 * Math.PI - angle) / (count - 1);
+
+		for (var i = 0; i < count; i++) {
+		    this.gameData.circles.push(new Circle(angle, this.gameData.interlocked[i] || []));
+		    angle += step;
 		}
 		
 		this.spacial = new Spacial(this.context.canvas, this.gameData.circles.length);
