@@ -8,7 +8,7 @@ window.requestAnimationFrame =
 	
 var Puzzle = (function () {
 
-	function Puzzle(context, circlesCount, canvasContainer) {
+    function Puzzle(canvasContainer, context, circlesCount) {
 		this.context = context;
 		
 		this.visuals = new Visuals();;
@@ -74,7 +74,7 @@ var Puzzle = (function () {
 	};
 
 	var Visuals = function (imagePath) {
-		imagePath = imagePath || "monalisa.jpg";
+		imagePath = imagePath || "Images/monalisa.jpg";
 		
 		this.overlayColor = "rgba(0, 0, 0, 1)";
 		this.shouldStroke = true;
@@ -94,6 +94,16 @@ var Puzzle = (function () {
 			self.imagePath = path;
 		}
 	};
+
+	Puzzle.prototype.rotate = function (angle) {
+	    var current = this.gameData.current;
+	    current.rotation = utilities.normalizeAngle(current.rotation + angle);
+	    for (var i = 0; i < current.interlocked.length; i++) {
+	        var index = current.interlocked[i];
+	        var next = this.gameData.circles[index];
+	        next.rotation = utilities.normalizeAngle(next.rotation + angle);
+	    }
+	}
 
 	Puzzle.prototype.solve = function solve(angle) {
 		angle = utilities.normalizeAngle(angle || 0);
@@ -127,8 +137,7 @@ var Puzzle = (function () {
 
 	
 	Puzzle.prototype.update = function update() {
-		var hasWon = this.testVictoryCondition();
-		if (hasWon) console.log("GJ");
+
 	}
 
 	Puzzle.prototype.drawTorus = function (radius, shouldOverlay) {
